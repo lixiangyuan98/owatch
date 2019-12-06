@@ -30,3 +30,14 @@
 *.exe
 *.out
 *.app
+owatch
+test/file_test
+test/un_client_test
+test/un_server_test
+
+# IDE and Editor files
+.vscode/
+.idea/
+
+# Videos
+*.264
