@@ -1,6 +1,6 @@
 SRC=rtp.cpp collector.cpp
 OBJS = $(SRC:%.cpp=%.o)
-TEST_SRC=test/file_test.cpp
+TEST_SRC=test/file_test.cpp test/un_server_test.cpp  test/un_client_test.cpp
 TEST = $(TEST_SRC:%.cpp=%)
 
 CC=/usr/bin/g++
@@ -27,4 +27,4 @@ test: $(TEST)
 
 clean:
 	@rm -f *.o owatch
-	@rm -f $(TEST_OBJS)
+	@rm -f $(TEST)
