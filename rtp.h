@@ -6,9 +6,9 @@
 #include <jrtplib3/rtpudpv4transmitter.h>
 #include <jrtplib3/rtpsessionparams.h>
 
-#define DEFAULT_PT 96            /* 默认payload type为96 */
-#define DEFAULT_MARK false       /* 默认MARKER为false */
-#define MAX_PAYLOAD_SIZE 1400U   /* 最大RTP payload大小: MTU - IP头 - UDP头 - RTP头 ~= 1400 */
+#define DEFAULT_PT        96        /* 默认payload type为96 */
+#define DEFAULT_MARK      false     /* 默认MARKER为false */
+#define MAX_PAYLOAD_SIZE  1400U     /* 最大RTP payload大小: MTU - IP头 - UDP头 - RTP头 ~= 1400 */
 
 class VideoSender {
 public:
@@ -35,7 +35,16 @@ public:
      * @param port 端口号
      * @return 添加成功返回0, 否则返回负数
      */
-    int addDest(const char* addr, uint16_t port);
+    int addDest(const char *addr, uint16_t port);
+
+    /**
+     * 删除RTP目的地址
+     * 
+     * @param addr 点分十进制字符串
+     * @param port 端口号
+     * @return 删除成功返回0, 否则返回负数
+     */
+    int delDest(const char *addr, uint16_t port);
 
 private:
     

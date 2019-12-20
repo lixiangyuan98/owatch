@@ -1,12 +1,12 @@
-SRC=rtp.cpp collector.cpp
+SRC=rtp.cpp collector.cpp connection.cpp
 OBJS = $(SRC:%.cpp=%.o)
-TEST_SRC=test/file_test.cpp test/un_server_test.cpp  test/un_client_test.cpp
+TEST_SRC=test/connection_test.cpp test/file_test.cpp test/un_server_test.cpp  test/un_client_test.cpp
 TEST = $(TEST_SRC:%.cpp=%)
 
 CC=/usr/bin/g++
 CPPFLAGS=-g -O3 -Wall
 INC=
-LIB=-ljrtp -lpthread
+LIB=-ljrtp -lpthread -lrt
 
 .PHONY: owatch clean test
 

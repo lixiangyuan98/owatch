@@ -28,13 +28,13 @@ struct SendArg {
  */
 static void *_send(void *arg) {
     int status;
-    if ((status = ((struct SendArg*)arg)->sender->send(
-            ((struct SendArg*)arg)->data, ((struct SendArg*)arg)->len)) < 0) {
+    struct SendArg* sendArg = (struct SendArg*)arg;
+    if ((status = sendArg->sender->send(sendArg->data, sendArg->len)) < 0) {
         fprintf(stderr, "send error: %s\n", jrtplib::RTPGetErrorString(status).c_str());
     }
 
-    free(((struct SendArg*)arg)->data);
-    ((struct SendArg*)arg)->data = NULL;
+    free(sendArg->data);
+    sendArg->data = NULL;
     free(arg);
     arg = NULL;
 

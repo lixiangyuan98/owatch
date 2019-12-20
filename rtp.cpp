@@ -22,6 +22,7 @@ VideoSender::VideoSender(uint16_t port, double tsunit, uint32_t timestampinc) {
     session.SetDefaultPayloadType(DEFAULT_PT);
 	session.SetDefaultMark(DEFAULT_MARK);
 	session.SetDefaultTimestampIncrement(timestampinc);
+	/* 最大包长为 payload长度 + 12 Bytes包头 */
 	session.SetMaximumPacketSize(MAX_PAYLOAD_SIZE + 12);
 }
 
@@ -78,6 +79,11 @@ int VideoSender::send(const uint8_t* data, size_t len) {
 int VideoSender::addDest(const char* addr, uint16_t port) {
 	jrtplib::RTPIPv4Address dest(htonl(inet_addr(addr)), port);
 	return session.AddDestination(dest);
+}
+
+int VideoSender::delDest(const char *addr, uint16_t port) {
+	jrtplib::RTPIPv4Address dest(htonl(inet_addr(addr)), port);
+	return session.DeleteDestination(dest);
 }
 
 VideoSender::~VideoSender() {
