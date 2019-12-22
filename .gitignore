@@ -31,9 +31,8 @@
 *.out
 *.app
 owatch
-test/file_test
-test/un_client_test
-test/un_server_test
+test/*
+!test/*.cpp
 
 # IDE and Editor files
 .vscode/

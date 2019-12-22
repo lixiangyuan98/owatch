@@ -1,4 +1,4 @@
-SRC=rtp.cpp collector.cpp connection.cpp
+SRC=rtp.cpp collector.cpp connection.cpp parse_args.cpp
 OBJS = $(SRC:%.cpp=%.o)
 TEST_SRC=test/connection_test.cpp test/file_test.cpp test/un_server_test.cpp  test/un_client_test.cpp
 TEST = $(TEST_SRC:%.cpp=%)
@@ -8,9 +8,11 @@ CPPFLAGS=-g -O3 -Wall
 INC=
 LIB=-ljrtp -lpthread -lrt
 
-.PHONY: owatch clean test
+.PHONY: owatch clean test all
 
 default: owatch
+
+all: owatch test
 
 $(OBJS): %.o: %.cpp
 	$(CC) $(CPPFLAGS) $(INC) -c -o $@ $<

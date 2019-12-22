@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
         exit(-1);
     }
 
-    VideoSender sender(8000, 1.0/90000, 3750);
+    VideoSender sender(1.0/90000, 3750);
     sender.addDest(argv[2], atoi(argv[3]));
 
     FileCollector fc(argv[1]);

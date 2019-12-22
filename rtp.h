@@ -13,7 +13,7 @@
 class VideoSender {
 public:
     
-    VideoSender(uint16_t port, double tsunit, uint32_t timestampinc);
+    VideoSender(double tsunit, uint32_t timestampinc);
 
     ~VideoSender();
 
@@ -49,8 +49,6 @@ public:
 private:
     
     jrtplib::RTPSessionParams sessparams;
-    
-    jrtplib::RTPUDPv4TransmissionParams transparams;
     
     jrtplib::RTPSession session;
 

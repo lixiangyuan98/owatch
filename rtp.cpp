@@ -10,13 +10,13 @@
 
 #include "rtp.h"
 
-VideoSender::VideoSender(uint16_t port, double tsunit, uint32_t timestampinc) {
+VideoSender::VideoSender(double tsunit, uint32_t timestampinc) {
 	
     sessparams.SetOwnTimestampUnit(tsunit);
-    transparams.SetPortbase(port);
 
-    if (session.Create(sessparams, &transparams) < 0) {
-        std::cout << "create sess failed" << std::endl;
+    if (session.Create(sessparams, (jrtplib::RTPUDPv4TransmissionParams*)NULL) < 0) {
+        fprintf(stderr, "create sess failed\n");
+		exit(-1);
     }
 
     session.SetDefaultPayloadType(DEFAULT_PT);
@@ -87,6 +87,5 @@ int VideoSender::delDest(const char *addr, uint16_t port) {
 }
 
 VideoSender::~VideoSender() {
-	jrtplib::RTPTime delay = jrtplib::RTPTime(10.0);
-	session.BYEDestroy(delay,"Time's up",9);
+	session.Destroy();
 }

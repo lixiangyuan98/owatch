@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     }
 
     UDSCollector uc(SER_SOCKET);
-    VideoSender sender(8000, 1.0/90000, 3750);
+    VideoSender sender(1.0/90000, 3750);
     sender.addDest(argv[1], atoi(argv[2]));
 
     uint8_t recvBuff[1 << 20];
@@ -58,6 +58,11 @@ int main(int argc, char **argv) {
     struct SendArg *arg;
     for (;;) {
         len = uc.collect(recvBuff, 1 << 20);
+        if (len < 0) {
+            fprintf(stdout, "collect error\n");
+            continue;
+        }
+
         /* 利用新线程发送 */
         arg = (struct SendArg*)malloc(sizeof(struct SendArg));
         arg->sender = &sender;

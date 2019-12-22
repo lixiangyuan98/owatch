@@ -21,7 +21,7 @@ Connection::Connection(const char* addr, uint16_t port, uint16_t heartbeatFreq,
 
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         fprintf(stderr, "create socket error\n");
-        return;
+        exit(-1);
     }
     struct sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
@@ -29,7 +29,7 @@ Connection::Connection(const char* addr, uint16_t port, uint16_t heartbeatFreq,
     serverAddr.sin_port = htons(port);
     if (bind(sock, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
         fprintf(stderr, "create socket error\n");
-        return;
+        exit(-1);
     }
 
     struct timespec ts = {
