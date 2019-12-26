@@ -16,6 +16,10 @@
 
 `make all` 编译主程序和所有测试程序
 
+### Build for ARM
+
+`make CC={your-cross-compiler}` 指定交叉编译工具
+
 ## Usage
 
 `play.sdp`:
