@@ -6,18 +6,21 @@
 #include <string.h>
 #include <time.h>
 #include <signal.h>
+#include <cstdlib>
+#include <cstdio>
+#include <errno.h>
 
 #include "connection.h"
 
 struct notify_arg_t {
     uint32_t addr;
     conns_t *conns;
-    std::mutex *connsMu;
+    pthread_mutex_t *connsMu;
     onEvnFunc onLeave;
 };
 
 Connection::Connection(const char* addr, uint16_t port, uint16_t heartbeatFreq, 
-                       onEvnFunc onConnect, onEvnFunc onHeartbeat, onEvnFunc onLeave) {
+                       onEvnFunc onConnectFunc, onEvnFunc onHeartbeatFunc, onEvnFunc onLeaveFunc) {
 
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         fprintf(stderr, "create socket error\n");
@@ -33,18 +36,19 @@ Connection::Connection(const char* addr, uint16_t port, uint16_t heartbeatFreq,
     }
 
     struct timespec ts = {
-        .tv_sec = heartbeatFreq
+        tv_sec: heartbeatFreq
     };
     struct itimerspec its = {
-        .it_interval = {},
-        .it_value = ts,
+        it_interval: {},
+        it_value: ts,
     };
     this->heartbeatFreq = its;
     this->conns = new conns_t();
-    this->connsMu = new std::mutex();
-    this->onConnect = onConnect;
-    this->onHeartbeat = onHeartbeat;
-    this->onLeave = onLeave;
+    this->connsMu = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_init(this->connsMu, NULL);
+    this->onConnectFunc = onConnectFunc;
+    this->onHeartbeatFunc = onHeartbeatFunc;
+    this->onLeaveFunc = onLeaveFunc;
 }
 
 /** 
@@ -54,7 +58,7 @@ static void notify(union sigval arg) {
 
     notify_arg_t *notifyArg = (notify_arg_t*)arg.sival_ptr;
 
-    notifyArg->connsMu->lock();
+    pthread_mutex_lock(notifyArg->connsMu);
 
     if (timer_delete(notifyArg->conns->at(notifyArg->addr)) < 0) {
         fprintf(stderr, "delete timer error\n");
@@ -65,7 +69,7 @@ static void notify(union sigval arg) {
         notifyArg->onLeave(notifyArg->addr);
     }
 
-    notifyArg->connsMu->unlock();
+    pthread_mutex_unlock(notifyArg->connsMu);
     free(notifyArg);
 }
 
@@ -87,7 +91,7 @@ int Connection::setTimer(timer_t *tid, uint32_t addr) {
     notifyArg->addr = addr;
     notifyArg->conns = conns;
     notifyArg->connsMu = connsMu;
-    notifyArg->onLeave = onLeave;
+    notifyArg->onLeave = onLeaveFunc;
     sev.sigev_value.sival_ptr = notifyArg;
 
     if (timer_create(CLOCK_REALTIME, &sev, tid) < 0) {
@@ -113,30 +117,31 @@ void Connection::serve() {
         }
         addr = ntohl(clientAddr.sin_addr.s_addr);
         
-        connsMu->lock();
+        pthread_mutex_lock(connsMu);
 
-        auto iter = conns->find(addr);
+        conns_t::iterator iter = conns->find(addr);
         if (iter != conns->end()) {
             /* 更新定时器 */
             updateTimer(iter->second);
-            if (onHeartbeat) {
-                onHeartbeat(addr);
+            if (onHeartbeatFunc) {
+                onHeartbeatFunc(addr);
             }
         } else {
             /* 新增定时器 */
             timer_t tid;
             setTimer(&tid, addr);
             conns->insert(std::pair<uint32_t, timer_t>(addr, tid));
-            if (onConnect) {
-                onConnect(addr);
+            if (onConnectFunc) {
+                onConnectFunc(addr);
             }
         }
 
-        connsMu->unlock();
+        pthread_mutex_unlock(connsMu);
     }
 }
 
 Connection::~Connection() {
     delete this->conns;
+    pthread_mutex_destroy(this->connsMu);
     delete this->connsMu;
 }

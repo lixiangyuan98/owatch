@@ -3,6 +3,8 @@
  */
 #include <iostream>
 #include <arpa/inet.h>
+#include <cstdlib>
+#include <cstdio>
 
 #include <jrtplib3/rtptimeutilities.h>
 #include <jrtplib3/rtperrors.h>

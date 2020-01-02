@@ -5,6 +5,7 @@
  * file_test <file path> <dest ip> <dest port> 
  */
 #include <iostream>
+#include <cstdlib>
 
 #include "../rtp.h"
 #include "../collector.h"

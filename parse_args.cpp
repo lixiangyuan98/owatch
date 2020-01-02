@@ -3,20 +3,21 @@
  */
 #include <iostream>
 #include <getopt.h>
+#include <cstdlib>
 
 #include "parse_args.h"
 
 static const char *helpString = "\
-usage: owatch [-h] [-i inc] [--no-thread] [-p size] [-r rtp_port] \n\
+usage: owatch [-h] [-i inc] [-p size] [-r rtp_port] [--sync]\n\
               [--rate rate] [-s path] [-t ttl] host port\n\n\
 options:\n\
     -h, --help          display help and exit\n\
     -i, --inc inc       timestamp increment of per packet, default 3750\n\
-        --no-thread     do NOT create a new thread for sending each RTP packet\n\
     -p, --payload size  max size of per H264 payload, default 20, means 2^20 Bytes\n\
     -r, --rtp port      the port that client use to transmit RTP packet, default 9000\n\
         --rate rate     sample rate of the input data, default 90000Hz\n\
     -s, --socket path   the absolute path of Unix Domain Socket(UDS), default /tmp/owatch.sock\n\
+        --sync          send RTP packet synchronously\n\
     -t, --ttl ttl       seconds to wait before closing a connection, default 30\n\n\
 examples:\n\
     owatch -s /tmp/owatch.sock 0.0.0.0 8000     start a server, collecting data from socket\n\n\
@@ -26,26 +27,24 @@ static const char *shortOpts = "hi:p:r:s:t:";
 static const struct option longOpts[] = {
     {"help", no_argument, NULL, 'h'},
     {"inc", required_argument, NULL, 'i'},
-    {"no-thread", required_argument, NULL, 0},
     {"payload", required_argument, NULL, 'p'},
     {"rtp", required_argument, NULL, 'r'},
-    {"rate", required_argument, NULL, 1},
+    {"rate", required_argument, NULL, 0},
     {"socket", required_argument, NULL, 's'},
+    {"sync", no_argument, NULL, 1},
     {"ttl", required_argument, NULL, 't'},
 };
 
 ArgParser::ArgParser(int argc, char **argv) {
-    args = {
-        .host = "0.0.0.0",
-        .port = 8000,
-        .socketName = "/tmp/owatch.sock",
-        .rtpPort = 9000,
-        .ttl = 30,
-        .noThread = false,
-        .sampleRate = 90000,
-        .timestampinc = 3750,
-        .payloadSize = 20,
-    };
+    args.host = "0.0.0.0";
+    args.port = 8000;
+    args.socketName = "/tmp/owatch.sock";
+    args.rtpPort = 9000;
+    args.ttl = 30;
+    args.sync = false;
+    args.sampleRate = 90000;
+    args.timestampinc = 3750;
+    args.payloadSize = 20;
     parseArgs(argc, argv);
 }
 
@@ -90,11 +89,11 @@ void ArgParser::parseArgs(int argc, char **argv) {
             break;
         
         case 0:
-            args.noThread = true;
+            args.timestampinc = atoi(optarg);
             break;
 
         case 1:
-            args.timestampinc = atoi(optarg);
+            args.sync = true;
             break;
         
         default:

@@ -1,67 +1,93 @@
 #include <iostream>
+#include <queue>
+#include <unistd.h>
 
 #include "rtp.h"
 #include "collector.h"
 #include "connection.h"
 #include "parse_args.h"
 
-UDSCollector *collector;
-VideoSender *sender;
-struct Args *args;
-
 /**
- * 发送线程的参数
+ * 发送队列的数据类型
  */
-struct SendArg {
+struct SendPayload
+{
     uint8_t *data;
     size_t len;
 };
 
+/* 数据采集 */
+static UDSCollector *collector;
+/* RTP发送 */
+static VideoSender *sender;
+/* 发送队列的互斥信号量 */
+static pthread_mutex_t sendQueueMu;
+/* 发送队列的条件信号量 */
+static pthread_cond_t sendQueueCond;
+/* 发送队列 */
+static std::queue<struct SendPayload> sendQueue;
+/* 全局运行参数 */
+static struct Args *args;
+
 static void onConnect(uint32_t addr) {
-    fprintf(stdout, "addr=%s connect\n", inet_ntoa({htonl(addr)}));
-    sender->addDest(inet_ntoa({htonl(addr)}), args->rtpPort);
+    fprintf(stdout, "addr=%s connect\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}));
+    sender->addDest(inet_ntoa((struct in_addr){s_addr: htonl(addr)}), args->rtpPort);
+}
+
+static void onHeartbeat(uint32_t addr) {
+    fprintf(stdout, "addr=%s heartbeat\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}));
 }
 
 static void onLeave(uint32_t addr) {
-    fprintf(stdout, "addr=%s leave\n", inet_ntoa({htonl(addr)}));
-    sender->delDest(inet_ntoa({htonl(addr)}), args->rtpPort);
+    fprintf(stdout, "addr=%s leave\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}));
+    sender->delDest(inet_ntoa((struct in_addr){s_addr: htonl(addr)}), args->rtpPort);
 }
 
-/**
- * Wrapper function for Connection::serve()
- */
+/* Wrapper function for Connection::serve() */
 static void *startHeartbeatServer(void *conn) {
     ((Connection*)conn)->serve();
     free(conn);
     return 0;
 }
 
-/**
- * Wrapper function for VideoSender::send()
- */
+/* 异步发送后台线程 */
 static void *_send(void *arg) {
     int status;
-    struct SendArg* sendArg = (struct SendArg*)arg;
-    if ((status = sender->send(sendArg->data, sendArg->len)) < 0) {
-        fprintf(stderr, "send error: %s\n", jrtplib::RTPGetErrorString(status).c_str());
-    }
+    struct SendPayload payload;
+    for (;;) {
+        pthread_mutex_lock(&sendQueueMu);
+        while(sendQueue.empty()) {
+            pthread_cond_wait(&sendQueueCond, &sendQueueMu);
+        }
+        pthread_mutex_unlock(&sendQueueMu);
 
-    free(sendArg->data);
-    sendArg->data = NULL;
-    free(arg);
-    arg = NULL;
+        payload = sendQueue.front();
+        if ((status = sender->send(payload.data, payload.len)) < 0) {
+        fprintf(stderr, "send error: %s\n", jrtplib::RTPGetErrorString(status).c_str());
+        }
+        free(payload.data);
+        payload.data = NULL;
+
+        pthread_mutex_lock(&sendQueueMu);
+        sendQueue.pop();
+        pthread_mutex_unlock(&sendQueueMu);
+    }
 
     return 0;
 }
 
-/* 利用新线程异步发送 */
+/* 异步发送 */
 static void sendAsync(uint8_t *data, int len) {
-    pthread_t sendThreadId;
-    struct SendArg *arg = (struct SendArg*)malloc(sizeof(struct SendArg));
-    arg->data = (uint8_t *)malloc(len - 4);
-    arg->len = (size_t)len - 4;
-    memcpy(arg->data, data + 4, len - 4);
-    pthread_create(&sendThreadId, NULL, _send, arg);
+    struct SendPayload payload;
+    payload.data = (uint8_t *)malloc(len - 4);
+    payload.len = (size_t)len - 4;
+    memcpy(payload.data, data + 4, len - 4);
+
+    /* 加入发送队列 */
+    pthread_mutex_lock(&sendQueueMu);
+    sendQueue.push(payload);
+    pthread_cond_signal(&sendQueueCond);
+    pthread_mutex_unlock(&sendQueueMu);
 }
 
 /* 同步发送 */
@@ -78,7 +104,7 @@ int main(int argc, char ** argv) {
     args = argParser.getArgs();
     
     /* 启动心跳检测线程 */
-    Connection *conn = new Connection(args->host, args->port, args->ttl, onConnect, NULL, onLeave);
+    Connection *conn = new Connection(args->host, args->port, args->ttl, onConnect, onHeartbeat, onLeave);
     pthread_t tid;
     if (pthread_create(&tid, NULL, startHeartbeatServer, conn) < 0) {
         fprintf(stderr, "create heartbeat thread error\n");
@@ -86,10 +112,15 @@ int main(int argc, char ** argv) {
     }
     
     void (*send)(uint8_t *data, int len);
-    if (args->noThread) {
+    if (args->sync) {
         send = sendSync;
     } else {
         send = sendAsync;
+        pthread_mutex_init(&sendQueueMu, NULL);
+        pthread_cond_init(&sendQueueCond, NULL);
+        /* 启动异步发送线程 */
+        pthread_t sendThreadId;
+        pthread_create(&sendThreadId, NULL, _send, NULL);
     }
     
     /* 采集数据并发送 */

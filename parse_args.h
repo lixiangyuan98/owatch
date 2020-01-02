@@ -19,8 +19,8 @@ struct Args {
     /* 关闭客户端连接的超时时间 */
     uint16_t ttl;
 
-    /* 不使用新线程发送 */
-    bool noThread;
+    /* 同步发送 */
+    bool sync;
 
     /* 数据的采样率 */
     uint32_t sampleRate;

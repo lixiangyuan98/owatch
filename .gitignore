@@ -34,6 +34,9 @@ owatch
 test/*
 !test/*.cpp
 
+# Releases
+release/
+
 # IDE and Editor files
 .vscode/
 .idea/

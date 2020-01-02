@@ -3,7 +3,7 @@
 #define CONNECT_H
 
 #include <map>
-#include <mutex>
+#include <pthread.h>
 
 #define PACKETSIZE     8            /* 心跳包的大小为8 Bytes */
 
@@ -21,7 +21,7 @@ public:
      * @param onLeave 客户端断开的回调函数
      */
     Connection(const char* addr, uint16_t port, uint16_t heartbeatFreq, 
-               onEvnFunc onConnect, onEvnFunc onHeartbeat, onEvnFunc onLeave);
+               onEvnFunc onConnectFunc, onEvnFunc onHeartbeatFunc, onEvnFunc onLeaveFunc);
 
     ~Connection();
 
@@ -45,16 +45,16 @@ private:
     conns_t *conns;
 
     /* 互斥信号量 */
-    std::mutex *connsMu;
+    pthread_mutex_t *connsMu;
 
     /* 客户端首次连接时调用的回调函数 */
-    onEvnFunc onConnect;
+    onEvnFunc onConnectFunc;
 
     /* 客户端发送心跳包时调用的回调函数 */
-    onEvnFunc onHeartbeat;
+    onEvnFunc onHeartbeatFunc;
 
     /* 客户端断开连接时调用的回调函数 */
-    onEvnFunc onLeave;
+    onEvnFunc onLeaveFunc;
 
     int updateTimer(timer_t tid);
 

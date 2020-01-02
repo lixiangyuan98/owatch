@@ -10,6 +10,8 @@
 #include <sys/un.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <cstdlib>
+#include <cstdio>
 
 #include "../collector.h"
 #include "../rtp.h"

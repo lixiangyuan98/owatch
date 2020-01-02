@@ -11,6 +11,8 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <cstdlib>
+#include <cstdio>
 
 #include "../collector.h"
 #include "../rtp.h"
