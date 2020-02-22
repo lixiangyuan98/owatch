@@ -20,7 +20,7 @@
 #define SER_SOCKET "/tmp/un_ser.sock"
 
 struct SendArg {
-    VideoSender *sender;
+    RTPSender *sender;
     uint8_t *data;
     size_t len;
 };
@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     }
 
     UDSCollector uc(SER_SOCKET);
-    VideoSender sender(1.0/90000, 3750);
+    RTPSender sender(1.0/90000, 3750);
     sender.addDest(argv[1], atoi(argv[2]));
 
     uint8_t recvBuff[1 << 20];

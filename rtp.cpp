@@ -12,7 +12,7 @@
 
 #include "rtp.h"
 
-VideoSender::VideoSender(double tsunit, uint32_t timestampinc) {
+RTPSender::RTPSender(double tsunit, uint32_t timestampinc) {
 	
     sessparams.SetOwnTimestampUnit(tsunit);
 
@@ -28,7 +28,7 @@ VideoSender::VideoSender(double tsunit, uint32_t timestampinc) {
 	session.SetMaximumPacketSize(MAX_PAYLOAD_SIZE + 12);
 }
 
-int VideoSender::send(const uint8_t* data, size_t len) {
+int RTPSender::send(const uint8_t* data, size_t len) {
 
 	int status = 0;
 
@@ -78,16 +78,16 @@ int VideoSender::send(const uint8_t* data, size_t len) {
 	return status;
 }
 
-int VideoSender::addDest(const char* addr, uint16_t port) {
+int RTPSender::addDest(const char* addr, uint16_t port) {
 	jrtplib::RTPIPv4Address dest(htonl(inet_addr(addr)), port);
 	return session.AddDestination(dest);
 }
 
-int VideoSender::delDest(const char *addr, uint16_t port) {
+int RTPSender::delDest(const char *addr, uint16_t port) {
 	jrtplib::RTPIPv4Address dest(htonl(inet_addr(addr)), port);
 	return session.DeleteDestination(dest);
 }
 
-VideoSender::~VideoSender() {
+RTPSender::~RTPSender() {
 	session.Destroy();
 }

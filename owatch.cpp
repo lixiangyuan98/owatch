@@ -19,7 +19,7 @@ struct SendPayload
 /* 数据采集 */
 static UDSCollector *collector;
 /* RTP发送 */
-static VideoSender *sender;
+static RTPSender *sender;
 /* 发送队列的互斥信号量 */
 static pthread_mutex_t sendQueueMu;
 /* 发送队列的条件信号量 */
@@ -125,7 +125,7 @@ int main(int argc, char ** argv) {
     
     /* 采集数据并发送 */
     collector = new UDSCollector(args->socketName);
-    sender = new VideoSender(1.0/args->sampleRate, args->timestampinc);
+    sender = new RTPSender(1.0/args->sampleRate, args->timestampinc);
     uint8_t recvBuff[1 << args->payloadSize];
     int len;
     for (;;) {

@@ -8,14 +8,14 @@
 
 #define DEFAULT_PT        96        /* 默认payload type为96 */
 #define DEFAULT_MARK      false     /* 默认MARKER为false */
-#define MAX_PAYLOAD_SIZE  1400U     /* 最大RTP payload大小: MTU - IP头 - UDP头 - RTP头 ~= 1400 */
+#define MAX_PAYLOAD_SIZE  1000U     /* 最大RTP payload大小: MTU - IP头 - UDP头 - RTP头 ~= 1400 */
 
-class VideoSender {
+class RTPSender {
 public:
     
-    VideoSender(double tsunit, uint32_t timestampinc);
+    RTPSender(double tsunit, uint32_t timestampinc);
 
-    ~VideoSender();
+    ~RTPSender();
 
     /**
      * 发送RTP数据
