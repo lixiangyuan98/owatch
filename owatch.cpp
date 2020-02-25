@@ -10,8 +10,7 @@
 /**
  * 发送队列的数据类型
  */
-struct SendPayload
-{
+struct SendPayload {
     uint8_t *data;
     size_t len;
 };
@@ -26,12 +25,22 @@ static pthread_mutex_t sendQueueMu;
 static pthread_cond_t sendQueueCond;
 /* 发送队列 */
 static std::queue<struct SendPayload> sendQueue;
+/* 服务用户数的互斥信号量 */
+static pthread_mutex_t userCountMu;
+/* 服务用户数的条件信号量 */
+static pthread_cond_t userCountCond;
+/* 服务用户数 */
+static int userCount;
 /* 全局运行参数 */
 static struct Args *args;
 
 static void onConnect(uint32_t addr) {
     fprintf(stdout, "addr=%s connect\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}));
+    pthread_mutex_lock(&userCountMu);
+    userCount++;
     sender->addDest(inet_ntoa((struct in_addr){s_addr: htonl(addr)}), args->rtpPort);
+    pthread_cond_signal(&userCountCond);
+    pthread_mutex_unlock(&userCountMu);
 }
 
 static void onHeartbeat(uint32_t addr) {
@@ -40,7 +49,10 @@ static void onHeartbeat(uint32_t addr) {
 
 static void onLeave(uint32_t addr) {
     fprintf(stdout, "addr=%s leave\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}));
+    pthread_mutex_lock(&userCountMu);
+    userCount--;
     sender->delDest(inet_ntoa((struct in_addr){s_addr: htonl(addr)}), args->rtpPort);
+    pthread_mutex_unlock(&userCountMu);
 }
 
 /* Wrapper function for Connection::serve() */
@@ -63,7 +75,7 @@ static void *_send(void *arg) {
 
         payload = sendQueue.front();
         if ((status = sender->send(payload.data, payload.len)) < 0) {
-        fprintf(stderr, "send error: %s\n", jrtplib::RTPGetErrorString(status).c_str());
+            fprintf(stderr, "send error: %s\n", jrtplib::RTPGetErrorString(status).c_str());
         }
         free(payload.data);
         payload.data = NULL;
@@ -129,12 +141,18 @@ int main(int argc, char ** argv) {
     uint8_t recvBuff[1 << args->payloadSize];
     int len;
     for (;;) {
+        fprintf(stdout, "collect\n");
         len = collector->collect(recvBuff, 1 << args->payloadSize);
         if (len < 0) {
             fprintf(stderr, "collect error\n");
             continue;
         }
+        pthread_mutex_lock(&userCountMu);
+        while (userCount == 0) {
+            pthread_cond_wait(&userCountCond, &userCountMu);
+        }
         send(recvBuff, len);
+        pthread_mutex_unlock(&userCountMu);
     }
 
     return 0;
