@@ -56,9 +56,9 @@ static void onLeave(uint32_t addr) {
 }
 
 /* Wrapper function for Connection::serve() */
-static void *startHeartbeatServer(void *conn) {
-    ((Connection*)conn)->serve();
-    free(conn);
+static void *startHeartbeatServer(void *s) {
+    ((HeartbeatServer*)s)->serve();
+    free(s);
     return 0;
 }
 
@@ -116,9 +116,9 @@ int main(int argc, char ** argv) {
     args = argParser.getArgs();
     
     /* 启动心跳检测线程 */
-    Connection *conn = new Connection(args->host, args->port, args->ttl, onConnect, onHeartbeat, onLeave);
+    HeartbeatServer *heartbeatServer = new HeartbeatServer(args->host, args->port, args->ttl, onConnect, onHeartbeat, onLeave);
     pthread_t tid;
-    if (pthread_create(&tid, NULL, startHeartbeatServer, conn) < 0) {
+    if (pthread_create(&tid, NULL, startHeartbeatServer, heartbeatServer) < 0) {
         fprintf(stderr, "create heartbeat thread error\n");
         exit(-1);
     }

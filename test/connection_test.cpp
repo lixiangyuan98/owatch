@@ -32,7 +32,7 @@ int main(int argc, char ** argv) {
         exit(-1);
     }
 
-    Connection conn(argv[1], atoi(argv[2]), atoi(argv[3]), onConnect, onHeartbeat, onLeave);
+    HeartbeatServer conn(argv[1], atoi(argv[2]), atoi(argv[3]), onConnect, onHeartbeat, onLeave);
     conn.serve();
     return 0;
 }

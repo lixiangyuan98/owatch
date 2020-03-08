@@ -10,7 +10,7 @@
 typedef void (*onEvnFunc)(uint32_t addr);       /* 客户端首次连接/更新/失联时的回调函数类型 */
 typedef std::map<uint32_t, timer_t> conns_t;    /* 客户端连接信息容器类型 */
 
-class Connection {
+class HeartbeatServer {
 public:
 
     /**
@@ -20,10 +20,10 @@ public:
      * @param onHeartBeat 客户端发送心跳的回调函数
      * @param onLeave 客户端断开的回调函数
      */
-    Connection(const char* addr, uint16_t port, uint16_t heartbeatFreq, 
+    HeartbeatServer(const char* addr, uint16_t port, uint16_t heartbeatFreq, 
                onEvnFunc onConnectFunc, onEvnFunc onHeartbeatFunc, onEvnFunc onLeaveFunc);
 
-    ~Connection();
+    ~HeartbeatServer();
 
     /**
      * 接收客户端的心跳包

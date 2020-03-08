@@ -19,7 +19,7 @@ struct notify_arg_t {
     onEvnFunc onLeave;
 };
 
-Connection::Connection(const char* addr, uint16_t port, uint16_t heartbeatFreq, 
+HeartbeatServer::HeartbeatServer(const char* addr, uint16_t port, uint16_t heartbeatFreq, 
                        onEvnFunc onConnectFunc, onEvnFunc onHeartbeatFunc, onEvnFunc onLeaveFunc) {
 
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -73,7 +73,7 @@ static void notify(union sigval arg) {
     free(notifyArg);
 }
 
-int Connection::updateTimer(timer_t tid) {
+int HeartbeatServer::updateTimer(timer_t tid) {
     
     if (timer_settime(tid, 0, &heartbeatFreq, NULL) < 0) {
         fprintf(stderr, "update timer error: %d\n", errno);
@@ -82,7 +82,7 @@ int Connection::updateTimer(timer_t tid) {
     return 0;
 }
 
-int Connection::setTimer(timer_t *tid, uint32_t addr) {
+int HeartbeatServer::setTimer(timer_t *tid, uint32_t addr) {
     
     struct sigevent sev = {};
     sev.sigev_notify = SIGEV_THREAD;
@@ -102,7 +102,7 @@ int Connection::setTimer(timer_t *tid, uint32_t addr) {
     return updateTimer(*tid);
 }
 
-void Connection::serve() {
+void HeartbeatServer::serve() {
     
     uint8_t buff[PACKETSIZE];
     struct sockaddr_in clientAddr;
@@ -140,7 +140,7 @@ void Connection::serve() {
     }
 }
 
-Connection::~Connection() {
+HeartbeatServer::~HeartbeatServer() {
     delete this->conns;
     pthread_mutex_destroy(this->connsMu);
     delete this->connsMu;
