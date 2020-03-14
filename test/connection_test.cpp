@@ -13,15 +13,15 @@
 
 #include "../connection.h"
 
-static void onConnect(uint32_t addr) {
+static void onConnect(uint32_t addr, uint16_t port) {
     fprintf(stdout, "on connect, addr=%s, time=%ld\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}), time(NULL));
 }
 
-static void onLeave(uint32_t addr) {
+static void onLeave(uint32_t addr, uint16_t port) {
     fprintf(stdout, "on leave, addr=%s, time=%ld\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}), time(NULL));
 }
 
-static void onHeartbeat(uint32_t addr) {
+static void onHeartbeat(uint32_t addr, uint16_t port) {
     fprintf(stdout, "heartbeat, addr=%s, time=%ld\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}), time(NULL));
 }
 

@@ -14,7 +14,6 @@ FileCollector::FileCollector(const char *fn) {
     input.open(fn);
     if (input.fail()) {
         fprintf(stderr, "open file error\n");
-        exit(-1);
     }
 }
 

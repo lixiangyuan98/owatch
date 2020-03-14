@@ -8,9 +8,10 @@
 #include "parse_args.h"
 
 static const char *helpString = "\
-usage: owatch [-h] [-i inc] [-p size] [-r rtp_port] [--sync]\n\
-              [--rate rate] [-s path] [-t ttl] host port\n\n\
+usage: owatch [-d directory] [-h] [-i inc] [-p size] [-r rtp_port] \n\
+              [--sync] [--rate rate] [-s path] [-t ttl] host port\n\n\
 options:\n\
+    -d, --dir           video files directory\n\
     -h, --help          display help and exit\n\
     -i, --inc inc       timestamp increment of per packet, default 3750\n\
     -p, --payload size  max size of per H264 payload, default 20, means 2^20 Bytes\n\
@@ -21,10 +22,11 @@ options:\n\
     -t, --ttl ttl       seconds to wait before closing a connection, default 30\n\n\
 examples:\n\
     owatch -s /tmp/owatch.sock 0.0.0.0 8000     start a server, collecting data from socket\n\n\
-Sources and documens are available at: https://github.com/lixiangyuan98/owatch";
+Sources and documents are available at: https://github.com/lixiangyuan98/owatch";
 
-static const char *shortOpts = "hi:p:r:s:t:";
+static const char *shortOpts = "d:hi:p:r:s:t:";
 static const struct option longOpts[] = {
+    {"dir", required_argument, NULL, 'd'},
     {"help", no_argument, NULL, 'h'},
     {"inc", required_argument, NULL, 'i'},
     {"payload", required_argument, NULL, 'p'},
@@ -36,9 +38,10 @@ static const struct option longOpts[] = {
 };
 
 ArgParser::ArgParser(int argc, char **argv) {
+    args.directory = "/run/owatch/video";
     args.host = "0.0.0.0";
     args.port = 8000;
-    args.socketName = "/tmp/owatch.sock";
+    args.socketName = "/run/owatch/owatch.sock";
     args.rtpPort = 9000;
     args.ttl = 30;
     args.sync = false;

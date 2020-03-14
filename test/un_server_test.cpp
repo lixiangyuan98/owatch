@@ -72,6 +72,7 @@ int main(int argc, char **argv) {
         arg->len = (size_t)len - 4;
         memcpy(arg->data, recvBuff + 4, len - 4);
         pthread_create(&sendThreadId, NULL, _send, arg);
+        pthread_detach(sendThreadId);
     }
 
     return 0;

@@ -30,6 +30,9 @@ struct Args {
 
     /* H264帧的最大长度 */
     uint32_t payloadSize;
+
+    /* 存储视频文件的目录 */
+    const char *directory;
 };
 
 class ArgParser {

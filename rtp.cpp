@@ -12,14 +12,21 @@
 
 #include "rtp.h"
 
+#define PORT_BASE 5000
+#define PORT_MAX 50000
+
+static uint16_t portBase = PORT_BASE;
+
 RTPSender::RTPSender(double tsunit, uint32_t timestampinc) {
-	
+	jrtplib::RTPUDPv4TransmissionParams params;
+	params.SetPortbase(0);
     sessparams.SetOwnTimestampUnit(tsunit);
 
-    if (session.Create(sessparams, (jrtplib::RTPUDPv4TransmissionParams*)NULL) < 0) {
-        fprintf(stderr, "create sess failed\n");
-		exit(-1);
-    }
+	int status;
+	if ((status = session.Create(sessparams, &params)) < 0) {
+		fprintf(stderr, "create sess failed: %s\n", jrtplib::RTPGetErrorString(status).c_str());
+		return;
+	}
 
     session.SetDefaultPayloadType(DEFAULT_PT);
 	session.SetDefaultMark(DEFAULT_MARK);

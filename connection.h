@@ -7,9 +7,13 @@
 
 #define PACKETSIZE     8            /* 心跳包的大小为8 Bytes */
 
-typedef void (*onEvnFunc)(uint32_t addr);       /* 客户端首次连接/更新/失联时的回调函数类型 */
+typedef void (*onEvnFunc)(uint32_t addr, uint16_t port);       /* 客户端首次连接/更新/失联时的回调函数类型 */
 typedef std::map<uint32_t, timer_t> conns_t;    /* 客户端连接信息容器类型 */
 
+/**
+ * 心跳服务端
+ * 在master模式下, 作为服务端主动维护客户端的心跳
+ */
 class HeartbeatServer {
 public:
 
@@ -59,6 +63,48 @@ private:
     int updateTimer(timer_t tid);
 
     int setTimer(timer_t *tid, uint32_t addr);
+};
+
+/**
+ * 命令客户端
+ * 在slave模式下, 作为客户端主动连接管理程序, 接受管理程序发来的指令
+ */
+class Client {
+public:
+
+    /* 控制端下发的命令 */
+    struct command_t {
+        char *method;
+        char *dest;
+        char *port;
+        char *src;
+    };
+    
+    Client(const char* addr, uint16_t port, uint16_t reportFreq, const char* dir, void (*onRecvCommandFunc)(Client::command_t *command));
+
+    ~Client();
+
+    /**
+     * 启动新线程, 周期性上报数据
+     */
+    void start();
+
+private:
+
+    struct sockaddr_in serverAddr;
+
+    struct itimerspec reportFreq;
+
+    const char *dir;
+
+    void (*onRecvCommandFunc)(Client::command_t *command);
+
+    /**
+     * 解析收到的命令, 并处理
+     */
+    void _recv(char *m, size_t len);
+
+    static void *_send(void* arg);
 };
 
 #endif // CONNECT_H
