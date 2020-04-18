@@ -16,8 +16,8 @@
 #include "../collector.h"
 #include "../rtp.h"
 
-#define SER_SOCKET "/tmp/owatch.sock"
-#define CLI_SOCKET "/tmp/un_cli.sock"
+#define SER_SOCKET "/run/owatch/owatch.sock"
+#define CLI_SOCKET "/run/owatch/un_cli.sock"
 
 int main(int argc, char **argv) {
 

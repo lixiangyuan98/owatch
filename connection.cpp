@@ -281,7 +281,7 @@ void Client::_recv(char *m, size_t len) {
     strncpy(t, m + s, i - s + 1);
     command->port = t;
 
-    if (i < len) {
+    if (i < len - 1) {
         s = i + 1;
         t = (char *)malloc(sizeof(char) * (len - s + 1));
         strncpy(t, m + s, len - s);

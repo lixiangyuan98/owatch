@@ -43,7 +43,7 @@ static void onConnect(uint32_t addr, uint16_t port) {
     port = port == 0 ? args->port : port;
     pthread_mutex_lock(&userCountMu);
     if (sender->addDest(inet_ntoa((struct in_addr){s_addr: htonl(addr)}), port) == 0) {
-        fprintf(stdout, "addr=%s connect video\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}));
+        fprintf(stdout, "addr=%s:%d connect video\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}), port);
         userCount++;
         pthread_cond_signal(&userCountCond);
     }
@@ -51,14 +51,14 @@ static void onConnect(uint32_t addr, uint16_t port) {
 }
 
 static void onHeartbeat(uint32_t addr, uint16_t port) {
-    fprintf(stdout, "addr=%s heartbeat\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}));
+    fprintf(stdout, "addr=%s:%d heartbeat\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}), port);
 }
 
 static void onLeave(uint32_t addr, uint16_t port) {
     port = port == 0 ? args->port : port;
     pthread_mutex_lock(&userCountMu);
     if (sender->delDest(inet_ntoa((struct in_addr){s_addr: htonl(addr)}), port) == 0) {
-        fprintf(stdout, "addr=%s leave video\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}));
+        fprintf(stdout, "addr=%s:%d leave video\n", inet_ntoa((struct in_addr){s_addr: htonl(addr)}), port);
         userCount--;
     }
     pthread_mutex_unlock(&userCountMu);
@@ -214,11 +214,13 @@ static void onRecvCommand(Client::command_t *command) {
     if (strcmp(command->method, "SEND") == 0) {
         if (command->src == NULL) {
             /* 发送视频 */
+            onLeave(addr, lastPort);
             stopSendFile(addr);
             onConnect(addr, port);
         } else {
             /* 发送文件 */
             onLeave(addr, lastPort);
+            stopSendFile(addr);
             startSendFile(addr, port, command->src);
         }
     } else if (strcmp(command->method, "STOP") == 0) {
@@ -272,7 +274,6 @@ int main(int argc, char **argv) {
     uint8_t recvBuff[1 << args->payloadSize];
     int len;
     for (;;) {
-        fprintf(stdout, "collect from socket\n");
         len = collector->collect(recvBuff, 1 << args->payloadSize);
         if (len <= 0) {
             fprintf(stderr, "collect from socket error\n");
