@@ -201,36 +201,42 @@ static void onRecvCommand(Client::command_t *command) {
     inet_aton(command->dest, &inAddr);
     uint32_t addr = htonl(inAddr.s_addr);
     uint16_t port = atoi(command->port);
-    /* 保存目的端口 */
+
     uint16_t lastPort = 0;
     pthread_mutex_lock(&sendDataPortsMu);
     std::map<uint32_t, uint16_t>::iterator iter = sendDataPorts.find(addr);
     if (iter != sendDataPorts.end()) {
         lastPort = iter->second;
     }
-    sendDataPorts.insert(std::pair<uint32_t, uint16_t>(addr, port));
     pthread_mutex_unlock(&sendDataPortsMu);
     
     if (strcmp(command->method, "SEND") == 0) {
         if (command->src == NULL) {
             /* 发送视频 */
             onLeave(addr, lastPort);
-            stopSendFile(addr);
+            // stopSendFile(addr);
             onConnect(addr, port);
+
+            /* 保存目的端口 */
+            pthread_mutex_lock(&sendDataPortsMu);
+            sendDataPorts.insert(std::pair<uint32_t, uint16_t>(addr, port));
+            pthread_mutex_unlock(&sendDataPortsMu);
         } else {
             /* 发送文件 */
-            onLeave(addr, lastPort);
+            // onLeave(addr, lastPort);
             stopSendFile(addr);
             startSendFile(addr, port, command->src);
         }
     } else if (strcmp(command->method, "STOP") == 0) {
         /* 停止发送 */
-        stopSendFile(addr);
-        onLeave(addr, lastPort);
-
-        pthread_mutex_lock(&sendDataPortsMu);
-        sendDataPorts.erase(addr);
-        pthread_mutex_unlock(&sendDataPortsMu);
+        if (port == lastPort) {
+            onLeave(addr, port);
+            pthread_mutex_lock(&sendDataPortsMu);
+            sendDataPorts.erase(addr);
+            pthread_mutex_unlock(&sendDataPortsMu);
+        } else {
+            stopSendFile(addr);
+        }
     }
 }
 
